@@ -1,0 +1,40 @@
+{
+  "products": [
+    {
+      "id": "1",
+      "name": "Kindle 16 GB",
+      "price": 599,
+      "rating": 4.5
+    },
+    {
+      "id": "2",
+      "name": "geladeira",
+      "price": 2566.99,
+      "rating": 3.5
+    },
+    {
+      "id": "3",
+      "name": "Mesa para Escritório Office Estilo Industrial",
+      "price": 258.45,
+      "rating": 4.7
+    },
+    {
+      "id": "4",
+      "name": "LEGO Technic Carro Ferrari",
+      "price": 1305.9,
+      "rating": 4.7
+    },
+    {
+      "id": "5",
+      "name": "carro",
+      "price": 9.99,
+      "rating": 2.3
+    }
+  ],
+  "metadata": [
+    {
+      "nowId": 5,
+      "id": "1"
+    }
+  ]
+}
