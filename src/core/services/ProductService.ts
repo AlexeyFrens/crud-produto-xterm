@@ -62,10 +62,7 @@ export const updateProduct = async (product: Product) => {
     const productToUpdate = await getProduct(product.id!)
 
     try {
-        const response = await API.put(`${ENDPOINT}/${productToUpdate.id}`, product);
-        if (response.status === 200) {
-            return "Produto atualizado com sucesso!"
-        }
+        return await API.put(`${ENDPOINT}/${productToUpdate.id}`, product);
     } catch (error) {
         throw new Error(`Erro ao atualizar produto: ${error}`);
     }

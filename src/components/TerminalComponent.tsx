@@ -3,7 +3,14 @@ import {useEffect, useRef} from "react";
 import 'xterm/css/xterm.css';
 
 import './TerminalComponent.css';
-import {createProduct, getCurrentId, getProduct, getProducts, increaseId} from "../core/services/ProductService.ts";
+import {
+    createProduct,
+    getCurrentId,
+    getProduct,
+    getProducts,
+    increaseId,
+    updateProduct
+} from "../core/services/ProductService.ts";
 import type {Product} from "../core/types/type.ts";
 
 const TerminalComponent = () => {
@@ -46,29 +53,29 @@ const TerminalComponent = () => {
                     xterm.write('\r\n$ ');
                     break;
                 case '\u007F':
-                    if(command.length > 0) {
+                    if (command.length > 0) {
                         command = command.slice(0, -1);
                         xterm.write('\b \b')
                     }
                     break;
                 default:
-                        command += e;
-                        xterm.write(e);
+                    command += e;
+                    xterm.write(e);
             }
         })
 
         const processCommand = async (command: string, term: Terminal) => {
             const cleanCmd = command.trim();
-            if (cleanCmd === 'help') {
+            if (cleanCmd.toLowerCase() === 'help') {
                 term.write('\r\nComandos do Sistema:\r\n\n')
                 listCommands(term)
-            } else if (cleanCmd === 'clear') {
+            } else if (cleanCmd.toLowerCase() === 'clear') {
                 term.clear();
-            } else if (cleanCmd === 'date') {
+            } else if (cleanCmd.toLowerCase() === 'date') {
                 term.write(new Date().toLocaleString());
-            } else if (cleanCmd === 'reset') {
+            } else if (cleanCmd.toLowerCase() === 'reset') {
                 window.location.reload();
-            } else if (cleanCmd === 'listar') {
+            } else if (cleanCmd.toLowerCase() === 'listar') {
                 await listProducts(term)
             } else if (cleanCmd.startsWith('procurar -id')) {
                 const fields: string[] = cleanCmd.split(' ')
@@ -80,15 +87,19 @@ const TerminalComponent = () => {
 
                 const values: string[] = getValuesToCreate(cleanCmd);
 
-                console.log(values);
-
                 await processCreateProduct(term, values[0], values[1], values[2])
+            } else if (cleanCmd.startsWith('alterar -id') || cleanCmd.includes('-nome')
+                || cleanCmd.includes('-preco') || cleanCmd.includes('-avaliacao')) {
+
+                const values: string[] = getValuesToUpdate(cleanCmd);
+
+                await processUpdateProduct(term, values[0], values[1], values[2], values[3])
             } else if (cleanCmd !== '') {
                 term.write(`${ANSI.bold}${ANSI.red}Comando não reconhecido: ${cleanCmd}${ANSI.reset}`);
             }
         }
 
-        const listProducts = async (term: Terminal)=> {
+        const listProducts = async (term: Terminal) => {
             const products = await getProducts()
             const id = "ID", name = "NOME", price = "PREÇO", rating = "NOTA";
 
@@ -108,7 +119,7 @@ const TerminalComponent = () => {
         const findProduct = async (term: Terminal, id: string) => {
             const parsedId = Number(id)
 
-            if(isNaN(parsedId)) {
+            if (isNaN(parsedId)) {
                 term.write(`${ANSI.bold}${ANSI.red}Erro: o ID = ${id} está com o formato incorreto. Tente novamente fornecendo apenas números${ANSI.reset}`)
                 return
             }
@@ -173,12 +184,58 @@ const TerminalComponent = () => {
             }
         }
 
+        const processUpdateProduct = async (term: Terminal, productId: string,
+                              possibleNewName: string, possibleNewPrice: string, possibleNewRating: string)=> {
+            const parsedPrice = Number(possibleNewPrice)
+            const parsedRating = Number(possibleNewRating)
+            let currentProduct: Product
+
+            if (isNaN(parsedPrice) || isNaN(parsedRating)) {
+                term.write(`${ANSI.bold}${ANSI.red}Erro: Valor(es) com o formato inválido. Preço e avaliação precisam ser números!${ANSI.reset}`);
+                return
+            }
+
+            try {
+
+                const response = await getProduct(productId)
+
+                currentProduct = {
+                    id: productId,
+                    name: response.name,
+                    price: response.price,
+                    rating: response.rating,
+                }
+            } catch (err) {
+                term.write(`${ANSI.bold}${ANSI.red}Produto com o ID ${productId} não foi encontrado!${ANSI.reset}`);
+                console.log(err);
+                return
+            }
+
+            try {
+                const productToUpdate: Product = {
+                    id: currentProduct.id,
+                    name: (possibleNewName !== '-1' ? possibleNewName : currentProduct.name),
+                    price: (parsedPrice !== -1 ? parsedPrice : currentProduct.price),
+                    rating: (parsedRating !== -1 ? parsedRating : currentProduct.rating),
+                }
+
+                const response = await updateProduct(productToUpdate)
+
+                if (response.status === 200) {
+                    term.write(`${ANSI.bold}${ANSI.brightGreen}Produto atualizado com sucesso!${ANSI.reset}`);
+                }
+            } catch (err) {
+                term.write(`${ANSI.bold}${ANSI.red}Erro ao atualizar produto. Entre em contato com o administrador do sistema.${ANSI.reset}`);
+                console.log(err);
+            }
+        }
+
         const getValuesToCreate = (command: string) => {
             const values: string[] = []
             const fields: string[] = command.split(' ')
             let name = "", currentIndex = 2
 
-            for(let i = 2; fields[i] !== '-preco'; i++) {
+            for (let i = 2; fields[i] !== '-preco'; i++) {
                 name += `${fields[i]} `;
                 currentIndex++
             }
@@ -192,32 +249,84 @@ const TerminalComponent = () => {
             return values;
         }
 
+        const getValuesToUpdate = (command: string) => {
+            const values: string[] = []
+            const fields: string[] = command.split(' ')
+            let name = "", currentIndex = 2
+
+            values[0] = fields[currentIndex];
+            currentIndex += 2;
+
+            for (let i = 4; fields[i] !== '-preco'; i++) {
+                name += `${fields[i]} `;
+                currentIndex++
+            }
+
+            values[1] = name.slice(0, -1);
+            currentIndex++
+            values[2] = fields[currentIndex];
+            currentIndex += 2
+            values[3] = fields[currentIndex];
+
+            return values;
+        }
+
         const listCommands = (term: Terminal) => {
-            term.write(`${ANSI.bold}${ANSI.brightCyan}${"help".padEnd(9)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightCyan}${"help".padEnd(11)}${ANSI.reset}`)
             term.write(" Mostra os comandos do sistema\r\n")
 
             //Comando clear
-            term.write(`${ANSI.bold}${ANSI.brightCyan}${"clear".padEnd(9)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightCyan}${"clear".padEnd(11)}${ANSI.reset}`)
             term.write(" Limpa o terminal de comando\r\n")
 
             //Comando date
-            term.write(`${ANSI.bold}${ANSI.brightCyan}${"date".padEnd(9)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightCyan}${"date".padEnd(11)}${ANSI.reset}`)
             term.write(" Mostra a data e hora atual\r\n")
 
             //Comando reset
-            term.write(`${ANSI.bold}${ANSI.brightCyan}${"reset".padEnd(9)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightCyan}${"reset".padEnd(11)}${ANSI.reset}`)
             term.write(" Recarrega a página, recarregando automaticamente o terminal\r\n")
 
             //Comando listar
-            term.write(`${ANSI.bold}${ANSI.brightCyan}${"listar".padEnd(9)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightCyan}${"listar".padEnd(11)}${ANSI.reset}`)
             term.write(" Lista os produtos cadastrados\r\n")
 
             //Comando procurar
-            term.write(`${ANSI.bold}${ANSI.brightCyan}${"procurar".padEnd(9)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightCyan}${"procurar".padEnd(11)}${ANSI.reset}`)
             term.write(" Mostra um produto específico pelo ID fornecido\r\n")
 
-            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-id".padStart(12).padEnd(13)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-id".padStart(14).padEnd(13)}${ANSI.reset}`)
             term.write(` Indica o ID do produto à ser procurado. ${ANSI.yellow}Exemplo: procurar -id 1${ANSI.reset}\r\n`)
+
+            //Comando criar
+            term.write(`${ANSI.bold}${ANSI.brightCyan}${"criar".padEnd(11)}${ANSI.reset}`)
+            term.write(" Cadastra um novo produto. Obrigatoriamente deve-se usar da seguinte forma:\r\n")
+            term.write(`${ANSI.yellow}${"criar".padStart(17)}${ANSI.reset}`)
+            term.write(`${ANSI.yellow} -nome *nome* -preco *preco* -avaliacao *avaliacao${ANSI.reset}\r\n\n`)
+
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-nome".padStart(16).padEnd(13)}${ANSI.reset}`)
+            term.write(` Indica o nome do produto.\r\n`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-preco".padStart(17).padEnd(13)}${ANSI.reset}`)
+            term.write(` Indica o preço do produto. Obrigatório apenas números. ${ANSI.yellow}Exemplo: 199.99${ANSI.reset}\r\n`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-avaliacao".padStart(21).padEnd(10)}${ANSI.reset}`)
+            term.write(` Indica a nota/avaliação do produto. Obrigatório apenas números. ${ANSI.yellow}Exemplo: 4.5${ANSI.reset}\r\n`)
+
+            //Comando atualizar
+            term.write(`${ANSI.bold}${ANSI.brightCyan}${"atualizar".padEnd(11)}${ANSI.reset}`)
+            term.write(" Atualiza um produto já existente. Obrigatoriamente deve-se usar da seguinte forma:\r\n")
+            term.write(`${ANSI.yellow}${"atualizar".padStart(21)}${ANSI.reset}`)
+            term.write(`${ANSI.yellow} -id *id* -nome *nome* -preco *preco* -avaliacao *avaliacao${ANSI.reset}\r\n\n`)
+
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-id".padStart(14).padEnd(13)}${ANSI.reset}`)
+            term.write(` Indica o ID do produto à ser atualizado.\r\n`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-nome".padStart(16).padEnd(13)}${ANSI.reset}`)
+            term.write(` Indica o nome do produto.\r\n`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-preco".padStart(17).padEnd(13)}${ANSI.reset}`)
+            term.write(` Indica o preço do produto. Obrigatório apenas números. ${ANSI.yellow}Exemplo: 199.99${ANSI.reset}\r\n`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-avaliacao".padStart(21).padEnd(10)}${ANSI.reset}`)
+            term.write(` Indica a nota/avaliação do produto. Obrigatório apenas números. ${ANSI.yellow}Exemplo: 4.5${ANSI.reset}\r\n`)
+            term.write(`${ANSI.bold}${ANSI.red}${"Para".padStart(15)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.red} indicar um campo que não será atualizado digite -1. Exemplo: -nome -1${ANSI.reset}\r\n`)
         }
 
         return () => {
