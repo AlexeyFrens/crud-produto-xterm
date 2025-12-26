@@ -352,37 +352,37 @@ const TerminalComponent = () => {
             term.write(`${ANSI.bold}${ANSI.brightCyan}${"procurar".padEnd(11)}${ANSI.reset}`)
             term.write(" Mostra um produto específico pelo ID fornecido\r\n")
 
-            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-id".padStart(14).padEnd(13)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-id".padStart(20).padEnd(13)}${ANSI.reset}`)
             term.write(` Indica o ID do produto à ser procurado. ${ANSI.yellow}Exemplo: procurar -id 1${ANSI.reset}\r\n`)
 
             //Comando criar
             term.write(`${ANSI.bold}${ANSI.brightCyan}${"criar".padEnd(11)}${ANSI.reset}`)
             term.write(" Cadastra um novo produto. Obrigatoriamente deve-se usar da seguinte forma:\r\n")
             term.write(`${ANSI.yellow}${"criar".padStart(17)}${ANSI.reset}`)
-            term.write(`${ANSI.yellow} -nome *nome* -preco *preco* -avaliacao *avaliacao${ANSI.reset}\r\n\n`)
+            term.write(`${ANSI.yellow} -nome *nome* -preco *preco* -avaliacao *avaliacao${ANSI.reset}\r\n`)
 
-            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-nome".padStart(16).padEnd(13)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-nome".padStart(22).padEnd(13)}${ANSI.reset}`)
             term.write(` Indica o nome do produto.\r\n`)
-            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-preco".padStart(17).padEnd(13)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-preco".padStart(23).padEnd(13)}${ANSI.reset}`)
             term.write(` Indica o preço do produto. Obrigatório apenas números. ${ANSI.yellow}Exemplo: 199.99${ANSI.reset}\r\n`)
-            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-avaliacao".padStart(21).padEnd(10)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-avaliacao".padStart(27).padEnd(10)}${ANSI.reset}`)
             term.write(` Indica a nota/avaliação do produto. Obrigatório apenas números. ${ANSI.yellow}Exemplo: 4.5${ANSI.reset}\r\n`)
 
             //Comando atualizar
             term.write(`${ANSI.bold}${ANSI.brightCyan}${"atualizar".padEnd(11)}${ANSI.reset}`)
             term.write(" Atualiza um produto já existente. Obrigatoriamente deve-se usar da seguinte forma:\r\n")
             term.write(`${ANSI.yellow}${"atualizar".padStart(21)}${ANSI.reset}`)
-            term.write(`${ANSI.yellow} -id *id* -nome *nome* -preco *preco* -avaliacao *avaliacao${ANSI.reset}\r\n\n`)
+            term.write(`${ANSI.yellow} -id *id* -nome *nome* -preco *preco* -avaliacao *avaliacao${ANSI.reset}\r\n`)
 
-            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-id".padStart(14).padEnd(13)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-id".padStart(20).padEnd(13)}${ANSI.reset}`)
             term.write(` Indica o ID do produto à ser atualizado.\r\n`)
-            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-nome".padStart(16).padEnd(13)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-nome".padStart(22).padEnd(13)}${ANSI.reset}`)
             term.write(` Indica o nome do produto.\r\n`)
-            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-preco".padStart(17).padEnd(13)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-preco".padStart(23).padEnd(13)}${ANSI.reset}`)
             term.write(` Indica o preço do produto. Obrigatório apenas números. ${ANSI.yellow}Exemplo: 199.99${ANSI.reset}\r\n`)
-            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-avaliacao".padStart(21).padEnd(10)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-avaliacao".padStart(27).padEnd(10)}${ANSI.reset}`)
             term.write(` Indica a nota/avaliação do produto. Obrigatório apenas números. ${ANSI.yellow}Exemplo: 4.5${ANSI.reset}\r\n`)
-            term.write(`${ANSI.bold}${ANSI.red}${"Para".padStart(15)}${ANSI.reset}`)
+            term.write(`${ANSI.bold}${ANSI.red}${"Para".padStart(21)}${ANSI.reset}`)
             term.write(`${ANSI.bold}${ANSI.red} indicar um campo que não será atualizado digite -1. Exemplo: -nome -1${ANSI.reset}\r\n`)
 
             //Comando deletar
