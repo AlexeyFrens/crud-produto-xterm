@@ -5,6 +5,7 @@ import 'xterm/css/xterm.css';
 import './TerminalComponent.css';
 import {
     createProduct,
+    deleteProduct,
     getCurrentId,
     getProduct,
     getProducts,
@@ -94,6 +95,11 @@ const TerminalComponent = () => {
                 const values: string[] = getValuesToUpdate(cleanCmd);
 
                 await processUpdateProduct(term, values[0], values[1], values[2], values[3])
+            } else if (cleanCmd.startsWith('deletar -id')) {
+                const fields: string[] = cleanCmd.split(' ')
+                const id = fields[fields.length - 1]
+
+                await processDeleteProduct(term, id);
             } else if (cleanCmd !== '') {
                 term.write(`${ANSI.bold}${ANSI.red}Comando não reconhecido: ${cleanCmd}${ANSI.reset}`);
             }
@@ -185,7 +191,7 @@ const TerminalComponent = () => {
         }
 
         const processUpdateProduct = async (term: Terminal, productId: string,
-                              possibleNewName: string, possibleNewPrice: string, possibleNewRating: string)=> {
+                                            possibleNewName: string, possibleNewPrice: string, possibleNewRating: string) => {
             const parsedPrice = Number(possibleNewPrice)
             const parsedRating = Number(possibleNewRating)
             let currentProduct: Product
@@ -228,6 +234,57 @@ const TerminalComponent = () => {
                 term.write(`${ANSI.bold}${ANSI.red}Erro ao atualizar produto. Entre em contato com o administrador do sistema.${ANSI.reset}`);
                 console.log(err);
             }
+        }
+
+        const processDeleteProduct = async (term: Terminal, productId: string) => {
+            let productToDelete
+
+            try {
+                productToDelete = await getProduct(productId);
+
+                term.write(`${ANSI.bold}${ANSI.yellow}Produto a ser deletado:${ANSI.reset}\r\n\n`);
+                term.write(`${ANSI.bold}${ANSI.brightCyan}ID: ${ANSI.reset}${productToDelete.id}\r\n`)
+                term.write(`${ANSI.bold}${ANSI.brightCyan}NOME: ${ANSI.reset}${productToDelete.name}\r\n`)
+                term.write(`${ANSI.bold}${ANSI.brightCyan}PREÇO: ${ANSI.reset}${productToDelete.price}\r\n`)
+                term.write(`${ANSI.bold}${ANSI.brightCyan}AVALIAÇÃO: ${ANSI.reset}${productToDelete.rating}\r\n\n`)
+
+                term.write(`${ANSI.bold}${ANSI.yellow}Deseja realmente deletar o produto com o ID ${productToDelete.id} (s/n)?${ANSI.reset} `);
+            } catch {
+                term.write(`${ANSI.bold}${ANSI.red}Erro: Produto com o ID: ${productId} não foi encontrado!${ANSI.reset}`);
+                return
+            }
+
+            const readyToDelete = await checkDeleteCondition(term);
+
+            if (readyToDelete) {
+                try {
+                    await deleteProduct(productId)
+
+                    term.write(`\r\n\n${ANSI.bold}${ANSI.brightGreen}Produto excluído com sucesso!${ANSI.reset}\r\n\n`);
+                } catch (e) {
+                    term.write(`${ANSI.bold}${ANSI.red}Erro ao excluir o produto. Entre em contato com o administrador${ANSI.reset}`);
+                    console.log(e)
+                }
+            } else {
+                term.write(`\r\n\n${ANSI.bold}${ANSI.red}Operação cancelada!${ANSI.reset}\r\n\n`);
+            }
+        }
+
+        const checkDeleteCondition = async (term: Terminal): Promise<boolean> => {
+            return new Promise((resolve) => {
+                const disposable = xterm.onData(e => {
+                    const char = e.toLowerCase()
+                    if (char === 's') {
+                        disposable.dispose()
+                        resolve(true)
+                    } else if (char === 'n') {
+                        disposable.dispose()
+                        resolve(false)
+                    } else {
+                        term.write(`\r\n${ANSI.bold}${ANSI.yellow}Por favor, digite apenas [s/n]:${ANSI.reset} `);
+                    }
+                })
+            })
         }
 
         const getValuesToCreate = (command: string) => {
@@ -327,6 +384,13 @@ const TerminalComponent = () => {
             term.write(` Indica a nota/avaliação do produto. Obrigatório apenas números. ${ANSI.yellow}Exemplo: 4.5${ANSI.reset}\r\n`)
             term.write(`${ANSI.bold}${ANSI.red}${"Para".padStart(15)}${ANSI.reset}`)
             term.write(`${ANSI.bold}${ANSI.red} indicar um campo que não será atualizado digite -1. Exemplo: -nome -1${ANSI.reset}\r\n`)
+
+            //Comando deletar
+            term.write(`${ANSI.bold}${ANSI.brightCyan}${"deletar".padEnd(11)}${ANSI.reset}`)
+            term.write(" Deleta um produto específico pelo ID fornecido\r\n")
+
+            term.write(`${ANSI.bold}${ANSI.brightGreen}${"-id".padStart(20).padEnd(13)}${ANSI.reset}`)
+            term.write(` Indica o ID do produto à ser excluído. ${ANSI.yellow}Exemplo: deletar -id 1${ANSI.reset}\r\n`)
         }
 
         return () => {

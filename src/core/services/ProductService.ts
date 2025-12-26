@@ -20,7 +20,7 @@ export const getProducts = async (): Promise<Product[]> => {
     }
 }
 
-export const getProduct = async (id: string) => {
+export const getProduct = async (id: string): Promise<Product> => {
     try {
         const response = await API.get(`${ENDPOINT}/${id}`);
         return response.data;
@@ -73,10 +73,7 @@ export const deleteProduct = async (id: string) => {
     const productToDelete = await getProduct(id);
 
     try {
-        const response = await API.delete(`${ENDPOINT}/${productToDelete.id}`);
-        if (response.status === 200) {
-            return "Produto removido com sucesso!"
-        }
+        return await API.delete(`${ENDPOINT}/${productToDelete.id}`);
     } catch (error) {
         throw new Error(`Erro ao remover produto: ${error}`);
     }
